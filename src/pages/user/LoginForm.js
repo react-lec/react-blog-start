@@ -27,8 +27,6 @@ const LoginForm = (props) => {
         },
       });
 
-      console.log(response);
-
       let jwt = response.headers.getAuthorization();
 
       localStorage.setItem('jwt', jwt);

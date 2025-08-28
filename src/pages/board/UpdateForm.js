@@ -1,20 +1,66 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const UpdateForm = (props) => {
-  const { id } = 1;
   const navigate = useNavigate();
+  const { id } = useParams();
+  const jwt = useSelector((state) => state.jwt);
+  const location = useLocation();
 
-  const [board, setBoard] = useState({});
+  console.log(location);
+
+  const [board, setBoard] = useState(location.state);
+
+  useEffect(() => {
+    // fetchUserInfo();
+  }, []);
 
   async function updateSubmit(e) {
     e.preventDefault();
+    try {
+      await axios({
+        method: 'put',
+        url: `http://localhost:8080/api/boards/${id}`,
+        headers: {
+          Authorization: jwt,
+        },
+        data: board,
+      });
+    } catch (error) {
+      alert(error.response.data.msg);
+      return;
+    }
+    navigate(`/board/${id}`);
   }
 
-  const changeValue = (e) => {};
+  const changeValue = (e) => {
+    const { name, value } = e.target;
+    setBoard({
+      ...board,
+      [name]: value,
+    });
+  };
 
-  async function fetchUserInfo() {}
+  async function fetchUserInfo() {
+    let response = await axios({
+      method: 'get',
+      url: `http://localhost:8080/api/boards/${id}`,
+      headers: {
+        Authorization: jwt,
+      },
+    });
+
+    let responseBody = response.data;
+    setBoard({
+      title: responseBody.body.title,
+      content: responseBody.body.content,
+    });
+  }
+
+  console.log(board);
 
   return (
     <div>
@@ -24,7 +70,7 @@ const UpdateForm = (props) => {
         <Form.Group>
           <Form.Label>Title</Form.Label>
           <Form.Control
-            value={'제목1'}
+            value={board.title}
             type='text'
             placeholder='Enter title'
             name='title'
@@ -37,7 +83,7 @@ const UpdateForm = (props) => {
           <Form.Control
             as='textarea'
             row={5}
-            value={'내용1'}
+            value={board.content}
             name='content'
             onChange={changeValue}
           />

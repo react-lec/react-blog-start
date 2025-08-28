@@ -26,7 +26,7 @@ const Home = () => {
       // 검색어 없으면 즉시 실행 (페이지 이동 같은 경우)
       apiHome();
     }
-  }, [page]);
+  }, [page, keyword]);
 
   async function apiHome() {
     let response = await axios({
@@ -46,12 +46,10 @@ const Home = () => {
 
   function changeValue(e) {
     setKeyword(e.target.value);
-    console.log(e.target.value);
   }
 
   return (
     <div>
-      {keyword}
       <Form className='d-flex mb-4' onSubmit={''}>
         <FormControl
           type='search'
