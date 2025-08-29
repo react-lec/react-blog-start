@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import ReplyItem from '../../components/ReplyItem';
 
 const Detail = (props) => {
   const { id } = useParams();
@@ -17,6 +18,43 @@ const Detail = (props) => {
     owner: false,
     replies: [],
   });
+
+  const [reply, setReply] = useState({
+    comment: '',
+    boardId: id,
+  });
+
+  const changeValue = (e) => {
+    setReply({
+      ...reply,
+      comment: e.target.value,
+    });
+  };
+
+  async function submitReply(e) {
+    e.preventDefault();
+
+    let response = await axios({
+      method: 'POST',
+      url: `http://localhost:8080/api/replies`,
+      data: reply,
+      headers: {
+        Authorization: jwt,
+      },
+    });
+
+    let responseBody = response.data.body;
+    console.log(responseBody);
+
+    board.replies = [responseBody, ...board.replies];
+    setBoard({ ...board });
+  }
+
+  function notifyDeleteReply(replyId) {
+    let newReplies = board.replies.filter((reply) => reply.id !== replyId);
+    board.replies = newReplies;
+    setBoard({ ...board });
+  }
 
   useEffect(() => {
     fetchDetail(id);
@@ -36,46 +74,21 @@ const Detail = (props) => {
 
   async function fetchDelete(boardId) {
     await axios({
-      method: 'delete',
+      method: 'DELETE',
       url: `http://localhost:8080/api/boards/${boardId}`,
       headers: {
         Authorization: jwt,
       },
     });
-
     navigate('/');
   }
 
-  async function fetchReplyDelete(replyId) {
-    await axios({
-      method: 'delete',
-      url: `http://localhost:8080/api/replies/${replyId}`,
-      headers: {
-        Authorization: jwt,
-      },
-    });
-
-    let newReplies = board.replies.filter((r) => r.id !== replyId);
-
-    setBoard({
-      ...board,
-      replies: newReplies,
-    });
-  }
-
-  // update-form 갈 때 상세보기의 상태 board 를 가져가서 사용
+  // update-form 갈때 상세보기의 상태 Board를 가져가는 것 연습해보기
   return (
     <div>
       {board.owner ? (
         <>
-          <Link
-            to={`/update-form/${board.id}`}
-            state={{
-              title: board.title,
-              content: board.content,
-            }}
-            className='btn btn-warning'
-          >
+          <Link to={`/update-form/${board.id}`} className='btn btn-warning'>
             수정
           </Link>
           <Button
@@ -106,12 +119,12 @@ const Detail = (props) => {
                 as='textarea'
                 rows={3}
                 placeholder='댓글을 입력하세요...'
-                value={''}
-                onChange={''}
+                value={reply.comment}
+                onChange={changeValue}
               />
             </Form.Group>
             <div className='d-grid gap-2 d-md-flex justify-content-md-end'>
-              <Button variant='primary' type='submit'>
+              <Button variant='primary' type='submit' onClick={submitReply}>
                 댓글 작성
               </Button>
             </div>
@@ -120,47 +133,9 @@ const Detail = (props) => {
       </Card>
 
       {/* 댓글 목록 */}
-
       <div className='comment-list'>
-        {board.replies.map((r) => (
-          <Card className='mb-3 shadow-sm border-0'>
-            <Card.Body>
-              <div className='d-flex align-items-center mb-2'>
-                <div className='flex-grow-1'>
-                  <h6 className='mb-0 fw-bold'>{r.username}</h6>
-                </div>
-                {r.owner ? (
-                  <div>
-                    <Button
-                      variant='warning'
-                      size='sm'
-                      className='me-2'
-                      onClick={() => {
-                        // 수정 버튼 클릭 시 실행할 함수 작성
-                        alert('수정 버튼 클릭');
-                      }}
-                    >
-                      수정
-                    </Button>
-                    <Button
-                      variant='danger'
-                      size='sm'
-                      onClick={() => {
-                        // 삭제 버튼 클릭 시 실행할 함수 작성
-                        // alert('삭제 버튼 클릭');
-                        fetchReplyDelete(r.id);
-                      }}
-                    >
-                      삭제
-                    </Button>
-                  </div>
-                ) : (
-                  <></>
-                )}
-              </div>
-              <p className='mb-2'>{r.comment}</p>
-            </Card.Body>
-          </Card>
+        {board.replies.map((reply) => (
+          <ReplyItem reply={reply} notifyDeleteReply={notifyDeleteReply} />
         ))}
       </div>
     </div>

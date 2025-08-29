@@ -1,16 +1,35 @@
+import axios from 'axios';
 import React, { useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 const SaveForm = (props) => {
   const navigate = useNavigate();
-  const [board, setBoard] = useState({});
+  const jwt = useSelector((state) => state.jwt);
+  const [board, setBoard] = useState({
+    title: '',
+    content: '',
+  });
 
   async function submitPost(e) {
     e.preventDefault();
+
+    await axios({
+      method: 'POST',
+      url: 'http://localhost:8080/api/boards',
+      data: board,
+      headers: {
+        Authorization: jwt,
+      },
+    });
+
+    navigate('/');
   }
 
-  function changeValue(e) {}
+  function changeValue(e) {
+    setBoard({ ...board, [e.target.name]: e.target.value });
+  }
 
   return (
     <div>
